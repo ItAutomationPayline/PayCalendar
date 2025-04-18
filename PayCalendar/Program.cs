@@ -23,7 +23,7 @@ namespace PayCalendar
             if (File.Exists(Alerts))
             {
                 Holidays = File.ReadAllLines(Alerts);
-                for(int i=0;i<=Holidays.Count()-1;i++) 
+                for (int i = 0; i <= Holidays.Count() - 1; i++)
                 {
                     Holidays[i] = Holidays[i] + " 00:00:00";
                     Holidays[i] = Holidays[i].Replace("/", "-");
@@ -33,14 +33,15 @@ namespace PayCalendar
         public static void Main(string[] args)
         {
             int currentYear = DateTime.Now.Year;
-            int financialYearStart = DateTime.Now.Month >= 4 ? currentYear+1 : currentYear;
+            int financialYearStart = DateTime.Now.Month >= 4 ? currentYear  : currentYear;
             int financialYearEnd = financialYearStart + 1;
-            string outputFilePath= @"D:\PayCalendar Automation\";
+            string outputFilePath = @"D:\PayCalendar Automation\";
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using (var outputPackage = new ExcelPackage())
             {
                 Console.WriteLine("Enter client name:");
-                string Client=Console.ReadLine();
-                var outputWorksheet = outputPackage.Workbook.Worksheets.Add(Client+" Pay calendar");
+                string Client = Console.ReadLine();
+                var outputWorksheet = outputPackage.Workbook.Worksheets.Add(Client + " Pay calendar");
                 outputWorksheet.Cells[1, 1].Value = "Pay Period";
                 outputWorksheet.Cells[1, 2].Value = "Customer Provides Payroll Inputs";
                 outputWorksheet.Cells[1, 3].Value = "Payroll Reports to QC";
@@ -56,22 +57,76 @@ namespace PayCalendar
                 outputWorksheet.Cells[1, 13].Value = "PF Payment Confirmation";
                 outputWorksheet.Cells[1, 14].Value = "ESIC Payment Confirmation";
                 outputWorksheet.Cells[1, 15].Value = "ESIC return";
-                Console.WriteLine("Last working date of every month in the current financial year:");
                 int row = 2;
-                for (int month = 4; month <= 12; month++) // April to December of current year
+                Console.WriteLine("Enter 0 if monthend or write pay date:");
+                int k=Convert.ToInt32(Console.ReadLine());
+                if (k == 0)
                 {
-                    DateTime lastWorkingDay = GetLastWorkingDay(financialYearStart, month);
-                    Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
-                    outputWorksheet.Cells[row, 7].Value = $"{lastWorkingDay:dd-MM-yyyy}";
-                    row++;
+                    #region monthend
+                    Console.WriteLine("Last working date of every month in the current financial year:");
+
+                    for (int month = 4; month <= 12; month++) // April to December of current year
+                    {
+                        DateTime lastWorkingDay = GetLastWorkingDay(financialYearStart, month);
+                        Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
+                        outputWorksheet.Cells[row, 7].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                        row++;
+                    }
+                    for (int month = 1; month <= 3; month++) // January to March of next year
+                    {
+                        DateTime lastWorkingDay = GetLastWorkingDay(financialYearEnd, month);
+                        Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
+                        outputWorksheet.Cells[row, 7].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                        row++;
+                    }
                 }
-                for (int month = 1; month <= 3; month++) // January to March of next year
-                {
-                    DateTime lastWorkingDay = GetLastWorkingDay(financialYearEnd, month);
-                    Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
-                    outputWorksheet.Cells[row, 7].Value = $"{lastWorkingDay:dd-MM-yyyy}";
-                    row++;
+                else {
+                    for (int month = 4; month <= 12; month++) // April to December of current year
+                    {
+                        DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month,k,0);
+                        Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
+                        outputWorksheet.Cells[row, 7].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                        row++;
+                    }
+                    for (int month = 1; month <= 3; month++) // January to March of next year
+                    {
+                        DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, k, 0);
+                        Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
+                        outputWorksheet.Cells[row, 7].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                        row++;
+                    }
                 }
+                #endregion
+                //Console.WriteLine("Enter approx Input date");
+                //int payrollinput= Convert.ToInt32(Console.ReadLine());
+                //for (int month = 4; month <= 12; month++) // April to December of current year
+                //{
+                //    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, payrollinput, 0);
+                //    Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
+                //    outputWorksheet.Cells[row, 2].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                //    row++;
+                //}
+                //for (int month = 1; month <= 3; month++) // January to March of next year
+                //{
+                //    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, payrollinput, 0);
+                //    Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
+                //    outputWorksheet.Cells[row, 2].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                //    row++;
+                //}
+                //for (int month = 4; month <= 12; month++) // April to December of current year
+                //{
+                //    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 2].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 2);
+                //    Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
+                //    outputWorksheet.Cells[row, 3].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                //    row++;
+                //}
+                //for (int month = 1; month <= 3; month++) // January to March of next year
+                //{
+                //    DateTime lastWorkingDay = GetNextWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 2].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 2);
+                //    Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
+                //    outputWorksheet.Cells[row, 3].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                //    row++;
+                //}
                 Console.WriteLine("\nEnter Expected Input Provide Date");
                 int clientDate = Convert.ToInt32(Console.ReadLine());
 
@@ -82,7 +137,7 @@ namespace PayCalendar
                     DateTime lastWorkingDay = InputDay(financialYearStart, month, clientDate);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 1].Value = $"{lastWorkingDay:MMMM yyyy}";
-                    outputWorksheet.Cells[row,2].Value= $"{lastWorkingDay:dd-MM-yyyy}";
+                    outputWorksheet.Cells[row, 2].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
@@ -97,14 +152,14 @@ namespace PayCalendar
                 Console.WriteLine("\n\nDates for Reports sent to QC are:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month,DateTime.ParseExact(outputWorksheet.Cells[row, 2].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 2);
+                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 2].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 1);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 3].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
                 {
-                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 2].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day ,2);
+                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 2].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 1);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 3].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
@@ -113,14 +168,14 @@ namespace PayCalendar
                 Console.WriteLine("\n\nDates for Reports sent to Client after QC are:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 3].GetValue<string>(), "dd-MM-yyyy", CultureInfo.InvariantCulture).Day ,1);
+                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 3].GetValue<string>(), "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 1);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 4].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 3].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day ,1);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 3].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 1);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 4].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
@@ -129,14 +184,14 @@ namespace PayCalendar
                 Console.WriteLine("\n\nDates Bank File to client:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 7].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day , -2);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 7].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, -2);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 6].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorking5Day(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 7].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day , -2);
+                    DateTime lastWorkingDay = GetPreviousWorking5Day(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 7].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, -2);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 6].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
@@ -145,30 +200,30 @@ namespace PayCalendar
                 Console.WriteLine("\n\nDates for Client Approves Reports:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 6].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day , -1);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 6].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, -1);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
-                    outputWorksheet.Cells[row, 5].Value = $"{lastWorkingDay:dd-MM-yyyy} "+ $"{lastWorkingDay:ddd}";
+                    outputWorksheet.Cells[row, 5].Value = outputWorksheet.Cells[row, 6].Text;
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 6].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day , -1);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 6].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, -1);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
-                    outputWorksheet.Cells[row, 5].Value = $"{lastWorkingDay:dd-MM-yyyy}";
+                    outputWorksheet.Cells[row, 5].Value = outputWorksheet.Cells[row, 6].Text;
                     row++;
                 }
                 row = 2;
                 Console.WriteLine("\n\nDates for Statutory filling are:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 7].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day , 2);
+                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearStart, month, DateTime.ParseExact(outputWorksheet.Cells[row, 7].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 2);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 8].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
                 {
-                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 7].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day , 2);
+                    DateTime lastWorkingDay = GetNextWorkingDay(financialYearEnd, month, DateTime.ParseExact(outputWorksheet.Cells[row, 7].Text, "dd-MM-yyyy", CultureInfo.InvariantCulture).Day, 2);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 8].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
@@ -177,14 +232,14 @@ namespace PayCalendar
                 Console.WriteLine("\n\nProfession Tax Payment Confirmation are:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month+1, 10,0);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month + 1, 10, 0);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 9].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month + 1, 10,0);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month + 1, 10, 0);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 9].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
@@ -193,7 +248,7 @@ namespace PayCalendar
                 Console.WriteLine("\n\nDates for Profession Tax return are:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month+1, 15, 0);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month + 1, 15, 0);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 10].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
@@ -209,14 +264,14 @@ namespace PayCalendar
                 Console.WriteLine("\n\nDates for TDS Payment Confirmation are:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month+1, 10, 0);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month + 1, 10, 0);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 11].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month+1, 10, 0);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month + 1, 10, 0);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 11].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
@@ -225,14 +280,14 @@ namespace PayCalendar
                 Console.WriteLine("\n\nDates for PF Payment Confirmation are:\n");
                 for (int month = 4; month <= 12; month++) // April to December of current year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month+1, 12, 0);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearStart, month + 1, 12, 0);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 13].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
                 }
                 for (int month = 1; month <= 3; month++) // January to March of next year
                 {
-                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month+1, 12, 0);
+                    DateTime lastWorkingDay = GetPreviousWorkingDay(financialYearEnd, month + 1, 12, 0);
                     Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                     outputWorksheet.Cells[row, 13].Value = $"{lastWorkingDay:dd-MM-yyyy}";
                     row++;
@@ -315,9 +370,9 @@ namespace PayCalendar
                 //    DateTime lastWorkingDay = GetNextWorkingDay(financialYearEnd+1, month, fixedDate);
                 //    Console.WriteLine($"{lastWorkingDay:MMMM yyyy}: {lastWorkingDay:dddd, dd-MM-yyyy}");
                 //}
-                
+
                 // Apply Formatting
-                
+
                 for (int i = 1; i <= 100; i++) // Assuming 100 rows
                 {
                     outputWorksheet.Row(i).Height = 27; // Set row height
@@ -331,7 +386,7 @@ namespace PayCalendar
                     outputWorksheet.Cells[1, i].Style.WrapText = true;
                 }
                 DateTime d;
-                d= GetPreviousWorkingDay(currentYear, 4, 15, 0); 
+                d = GetPreviousWorkingDay(currentYear, 4, 15, 0);
                 outputWorksheet.Cells[2, 12].Value = $"{d:dd-MM-yyyy}";
                 d = GetPreviousWorkingDay(currentYear, 7, 15, 0);
                 outputWorksheet.Cells[5, 12].Value = $"{d:dd-MM-yyyy}";
@@ -353,15 +408,15 @@ namespace PayCalendar
                 //        }
                 //    }
                 //}
-                for (int j = endCol; j >= 2; j--)
+                for (int j = endCol; j >= 3; j--)
                 {
-                    outputWorksheet.InsertColumn(j,1);
+                    outputWorksheet.InsertColumn(j, 1);
                     for (int i = 2; i <= endRow; i++)
                     {
-                        if (outputWorksheet.Cells[i, j-1].Text != "")
+                        if (outputWorksheet.Cells[i, j - 1].Text != "")
                         {
-                            outputWorksheet.Cells[1, j].Value="Day";
-                            DateTime lastWorkingDay = outputWorksheet.Cells[i, j-1].GetValue<DateTime>();
+                            outputWorksheet.Cells[1, j].Value = "Day";
+                            DateTime lastWorkingDay = outputWorksheet.Cells[i, j - 1].GetValue<DateTime>();
                             outputWorksheet.Cells[i, j].Value = $"{lastWorkingDay:ddd}";
                         }
                     }
@@ -386,16 +441,17 @@ namespace PayCalendar
                 }
                 outputWorksheet.Cells[outputWorksheet.Dimension.Address].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 outputWorksheet.Cells[outputWorksheet.Dimension.Address].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                 endRow = outputWorksheet.Dimension.End.Row;
-                 endCol = outputWorksheet.Dimension.End.Column;
+                endRow = outputWorksheet.Dimension.End.Row;
+                endCol = outputWorksheet.Dimension.End.Column;
                 for (int j = endCol; j >= 2; j--)
                 {
                     if (outputWorksheet.Cells[1, j].Text == "")
                     {
-                       outputWorksheet.DeleteColumn(j);
+                        outputWorksheet.DeleteColumn(j);
                     }
                 }
-                outputPackage.SaveAs(new FileInfo(outputFilePath + Client+ " Pay Calendar.xlsx"));
+                outputWorksheet.Cells[15, 1].Value = "Note: Saturdays, Sundays, and public holidays are not included in the calendar.";
+                outputPackage.SaveAs(new FileInfo(outputFilePath + Client + " Pay Calendar.xlsx"));
                 Console.WriteLine("Operation successful press Enter to exit. ");
                 Console.ReadLine();
             }
@@ -433,7 +489,7 @@ namespace PayCalendar
                 givenDay = givenDay.AddDays(-1);
 
             return givenDay;
-            }
+        }
         static DateTime GetPreviousWorking5Day(int year, int month, int day, int diff)
         {
             DateTime givenDay;
@@ -470,7 +526,7 @@ namespace PayCalendar
             try
             {
                 givenDay = new DateTime(year, month, day);
-                while (Holidays.Contains(givenDay.ToString())) 
+                while (Holidays.Contains(givenDay.ToString()))
                 {
                     Console.WriteLine("Holiday detected.");
                     givenDay = givenDay.AddDays(1);
@@ -494,8 +550,8 @@ namespace PayCalendar
             //    givenDay = givenDay.AddDays(2);
             if (givenDay.DayOfWeek == DayOfWeek.Sunday)
                 givenDay = givenDay.AddDays(1);
-            if (givenDay.DayOfWeek-1 == DayOfWeek.Sunday)
-                givenDay = givenDay.AddDays(1);
+            //if (givenDay.DayOfWeek - 1 == DayOfWeek.Sunday)
+            //    givenDay = givenDay.AddDays(1);
             return givenDay;
         }
         static DateTime GetNextWorkingDayBackwards(int year, int month, int day)
